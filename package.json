@@ -1,7 +1,7 @@
 {
   "name": "ember-cli-mixed-form-data",
   "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "description": "Upload files and send JSON data in the same AJAX request",
   "directories": {
     "doc": "doc",
     "test": "tests"
