@@ -1,3 +1,1 @@
-import FileTransform from 'ember-cli-mixed-form-data';
-
-export default FileTransform;
+export { default } from 'ember-cli-mixed-form-data/transforms/file';

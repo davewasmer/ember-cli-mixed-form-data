@@ -1,32 +1,34 @@
-/* global File, Blob */
-
+/* global traverse */
 import Ember from 'ember';
-import DS from 'ember-data';
+import UploadableFile from '../uploadable-file';
 
-export default DS.ActiveModelAdapter.extend({
+const get = Ember.get;
+const inject = Ember.inject;
+
+export default Ember.Mixin.create({
+
+  store: inject.service(),
+
+  formDataMethods: [ 'PUT', 'POST', 'PATCH' ],
 
   ajaxOptions: function(url, type, options) {
-    var data              = options && options.data;
-    var supportsFormData  = typeof FormData !== 'undefined';
-    var formDataTypes     = this.get('formDataMethods') || [ 'PUT', 'POST', 'PATCH' ];
-    var shouldUseFormData = formDataTypes.indexOf(type) > -1;
-    var hash              = this._super.apply(this, arguments);
+    let data              = options && options.data;
+    let supportsFormData  = typeof FormData !== 'undefined';
+    let shouldUseFormData = get(this, 'formDataMethods').indexOf(type) > -1;
+    let hash = this._super.call(this, url, type, options);
 
     if (data && supportsFormData && shouldUseFormData) {
-      var formData = new FormData();
-      var root = Ember.keys(data)[0];
+      let formData = new FormData();
 
-      Ember.keys(data[root]).forEach(function(key) {
-        var value = data[root][key];
-        var isUploadable = (value instanceof File) || (value instanceof Blob);
-
-        if (isUploadable) {
-          formData.append(root + '.' + key, value);
-          delete data[root][key];
+      data = traverse.map(data, function(value) {
+        if (value instanceof UploadableFile) {
+          this.remove();
+          let pointer = this.path.map((segment) => `/${ escapePointerSegment(segment) }`).join('');
+          formData.append(pointer, get(value, 'file'));
         }
       });
 
-      formData.append(root, JSON.stringify(data));
+      formData.append('', JSON.stringify(data));
 
       hash.processData = false;
       hash.contentType = false;
@@ -37,3 +39,7 @@ export default DS.ActiveModelAdapter.extend({
   }
 
 });
+
+function escapePointerSegment(segment) {
+  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
+}
